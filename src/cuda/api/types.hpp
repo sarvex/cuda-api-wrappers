@@ -625,6 +625,18 @@ using shared_handle_t = typename detail_::shared_handle_type_helper<SharedHandle
 
 } // namespace physical_allocation
 #endif // CUDA_VERSION >= 10020
+#if CUDA_VERSION >= 11020
+
+namespace pool {
+/**
+ * @note Unsupported for now
+ */
+using handle_t = CUmemoryPool;
+using shared_handle_kind_t = physical_allocation::shared_handle_kind_t;
+using physical_allocation::shared_handle_t;
+
+} // namespace pool
+#endif // CUDA_VERSION >= 11020
 
 namespace pointer {
 
