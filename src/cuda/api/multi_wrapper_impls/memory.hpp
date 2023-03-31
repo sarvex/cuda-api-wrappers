@@ -577,7 +577,6 @@ inline void set(void* ptr, int byte_value, size_t num_bytes)
 }
 
 #if CUDA_VERSION >= 10020
-namespace virtual_ {
 namespace physical_allocation {
 
 inline device_t properties_t::device() const
@@ -585,13 +584,13 @@ inline device_t properties_t::device() const
 	return cuda::device::wrap(raw.location.id);
 }
 
-template<kind_t SharedHandleKind>
+template<shared_handle_kind_t SharedHandleKind>
 properties_t create_properties_for(cuda::device_t device)
 {
 	return detail_::create_properties<SharedHandleKind>(device.id());
 }
 
-template<kind_t SharedHandleKind>
+template<shared_handle_kind_t SharedHandleKind>
 inline physical_allocation_t create(size_t size, device_t device)
 {
 	auto properties = create_properties_for<SharedHandleKind>(device);
@@ -599,6 +598,8 @@ inline physical_allocation_t create(size_t size, device_t device)
 }
 
 } // namespace physical_allocation
+
+namespace virtual_ {
 
 inline void set_access_mode(
 	region_t                     fully_mapped_region,

@@ -563,6 +563,37 @@ constexpr size_t composite_dimensions_t::dimensionality() const { return flatten
  */
 namespace memory {
 
+#if CUDA_VERSION >= 10020
+namespace physical_allocation {
+
+// TODO: Consider simply aliasing CUmemAllocationHandleType and using constexpr const's or anonymous enums
+enum class shared_handle_kind_t : ::std::underlying_type<CUmemAllocationHandleType>::type {
+#if CUDA_VERSION >= 11020
+	no_export             = CU_MEM_HANDLE_TYPE_NONE,
+#endif
+	posix_file_descriptor = CU_MEM_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR,
+	win32_handle          = CU_MEM_HANDLE_TYPE_WIN32,
+	win32_kmt             = CU_MEM_HANDLE_TYPE_WIN32_KMT,
+};
+
+namespace detail_ {
+
+template<shared_handle_kind_t SharedHandleKind> struct shared_handle_type_helper;
+
+template <> struct shared_handle_type_helper<shared_handle_kind_t::posix_file_descriptor> { using type = int; };
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+template <> struct shared_handle_type_helper<kind_t::win32_handle> { using type = void *; };
+#endif
+// TODO: What about WIN32_KMT?
+
+} // namespace detail_
+
+template<shared_handle_kind_t SharedHandleKind>
+using shared_handle_t = typename detail_::shared_handle_type_helper<SharedHandleKind>::type;
+
+} // namespace physical_allocation
+#endif // CUDA_VERSION >= 10020
+
 namespace pointer {
 
 using attribute_t = CUpointer_attribute;
