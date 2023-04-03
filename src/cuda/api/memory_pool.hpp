@@ -1,12 +1,8 @@
-/*MISSING:
-
-* Import and export pools in ipc.hpp
-*/
-
 /**
  * @file
  *
- * @brief A proxy class for CUDA memory pools
+ * @brief The @ref cuda::memory::pool_t proxy class for memory pools, and related
+ * code for creating, manipulating and allocating using memory pools.
  */
 #pragma once
 #ifndef CUDA_API_WRAPPERS_MEMORY_POOL_HPP_
@@ -15,7 +11,6 @@
 #if CUDA_VERSION >= 11020
 
 #include <cuda/api/memory.hpp>
-#include "virtual_memory.hpp"
 
 #include <cuda.h>
 
@@ -28,9 +23,16 @@ class pool_t;
 namespace pool {
 
 using handle_t = cudaMemPool_t;
+using physical_allocation::access_permissions_t;
 
 namespace detail_ {
 
+/**
+ * Generate a degenerate form of one of the memory pool API arguments, for
+ * a given device.
+ *
+ * @param device_id id of the device on which the allocation is to be made.
+ */
 inline CUmemLocation create_mem_location(cuda::device::id_t device_id) noexcept
 {
 	CUmemLocation result;
@@ -38,8 +40,7 @@ inline CUmemLocation create_mem_location(cuda::device::id_t device_id) noexcept
 	result.type = CU_MEM_LOCATION_TYPE_DEVICE;
 	return result;
 }
-// Very similar to cuda::memory::virtual_::physical_allocation::detail_create_properties() -
-// but not quite the same
+
 template<pool::shared_handle_kind_t SharedHandleKind>
 CUmemPoolProps create_raw_properties(cuda::device::id_t device_id) noexcept
 {
@@ -47,7 +48,7 @@ CUmemPoolProps create_raw_properties(cuda::device::id_t device_id) noexcept
 
 	// We set the pool properties structure to 0, since it seems the CUDA driver
 	// isn't too fond of arbitrary values, e.g. in the reserved fields
-	memset(&result, 0, sizeof(CUmemPoolProps));
+	::std::memset(&result, 0, sizeof(CUmemPoolProps));
 
 	result.location = create_mem_location(device_id);
 	result.allocType = CU_MEM_ALLOCATION_TYPE_PINNED;
@@ -121,34 +122,16 @@ void set_attribute(handle_t pool_handle, attribute_value_t<attribute> value)
 
 } // namespace detail_
 
+/**
+ * @brief Wrap an existing memory pool with a `memory::pool_t` wrapper
+ *
+ * @param device_id The device for which/on which the pool had been created
+ *     (and on whose memory allocations from the pool are made)
+ * @param handle A raw CUDA memory pool handle
+ * @param owning true if the proxy object needs to destroy the pool at
+ * the end of its lifetime
+ */
 pool_t wrap(cuda::device::id_t device_id, pool::handle_t handle, bool owning) noexcept;
-
-struct access_permissions_t {
-	bool read : 1;
-	bool write : 1;
-
-	operator CUmemAccess_flags() const noexcept
-	{
-		return read ?
-		   (write ? CU_MEM_ACCESS_FLAGS_PROT_READWRITE : CU_MEM_ACCESS_FLAGS_PROT_READ) :
-		   CU_MEM_ACCESS_FLAGS_PROT_NONE;
-	}
-
-	static access_permissions_t from_access_flags(CUmemAccess_flags access_flags)
-	{
-		access_permissions_t result;
-		result.read = (access_flags & CU_MEM_ACCESS_FLAGS_PROT_READ);
-		result.write = (access_flags & CU_MEM_ACCESS_FLAGS_PROT_READWRITE);
-		return result;
-	}
-};
-
-enum : bool {
-	read_enabled = true,
-	read_disabled = false,
-	write_enabled = true,
-	write_disabled = false
-};
 
 } // namespace pool
 

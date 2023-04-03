@@ -576,6 +576,33 @@ enum class shared_handle_kind_t : ::std::underlying_type<CUmemAllocationHandleTy
 	win32_kmt             = CU_MEM_HANDLE_TYPE_WIN32_KMT,
 };
 
+struct access_permissions_t {
+	bool read : 1;
+	bool write : 1;
+
+	operator CUmemAccess_flags() const noexcept
+	{
+		return read ?
+			   (write ? CU_MEM_ACCESS_FLAGS_PROT_READWRITE : CU_MEM_ACCESS_FLAGS_PROT_READ) :
+			   CU_MEM_ACCESS_FLAGS_PROT_NONE;
+	}
+
+	static access_permissions_t from_access_flags(CUmemAccess_flags access_flags)
+	{
+		access_permissions_t result;
+		result.read = (access_flags & CU_MEM_ACCESS_FLAGS_PROT_READ);
+		result.write = (access_flags & CU_MEM_ACCESS_FLAGS_PROT_READWRITE);
+		return result;
+	}
+};
+
+enum : bool {
+	read_enabled = true,
+	read_disabled = false,
+	write_enabled = true,
+	write_disabled = false
+};
+
 namespace detail_ {
 
 template<shared_handle_kind_t SharedHandleKind> struct shared_handle_type_helper;

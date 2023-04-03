@@ -126,6 +126,7 @@ add_executable(version_management by_runtime_api_module/version_management.cpp)
 add_executable(error_handling by_runtime_api_module/error_handling.cu)
 add_executable(device_management by_runtime_api_module/device_management.cpp)
 add_executable(context_management by_driver_api_module/context_management.cpp)
+add_executable(memory_pools by_driver_api_module/memory_pools.cpp)
 add_executable(execution_control by_runtime_api_module/execution_control.cu)
 set_property(TARGET execution_control  PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
