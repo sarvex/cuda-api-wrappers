@@ -16,7 +16,13 @@
  * Uses both Driver and Runtime CUDA APIs for different purposes.
  */
 
+#ifdef MSVC
+// Avoid warning C4996 about strerror, tmpnam and fopen
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "../../common.hpp"
+
 
 std::string create_ptx_file()
 {
